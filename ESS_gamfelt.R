@@ -240,7 +240,7 @@ mean(df_sums)
 # 0.5517183, +- correspond to 0.43 as mean in the output table
 
 # ---------------------------------------------------
-# Daniel! Does this calculation of the ESs seems correct?
+# Daniel: Does this calculation of the ESs seems correct?
 # ---------------------------------------------------
 
 
