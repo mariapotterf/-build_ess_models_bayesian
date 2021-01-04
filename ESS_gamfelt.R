@@ -239,6 +239,9 @@ mean(df_sums)
 
 # 0.5517183, +- correspond to 0.43 as mean in the output table
 
+# ---------------------------------------------------
+# Daniel! Does this calculation of the ESs seems correct?
+# ---------------------------------------------------
 
 
 
@@ -264,10 +267,11 @@ mean(df_sums)
 
 
 
-
-
-
-# -----------------------
+# ---------------------------------------------
+# From here:
+# It seems, that as I already know the estimates, I do not need the full Bayesian model, but it is enought to 
+# have just yESS = alpha + sum(B*x) for each of 6 services
+# ---------------------------------------------
 
 # Hierarchical models:
 
