@@ -5,7 +5,7 @@
 
 # higher levels of multiple ESS are found in forests with more tree species
 
-# biodiversity is siggested to positively influence multiple ESS but evidence is scarced
+# biodiversity is suggested to positively influence multiple ESS but evidence is scarced
 # ESS: 
 
 # How does tree species richness predict: 
@@ -18,29 +18,43 @@
 # - 6. probability of deadwood: presence/absence
 # no single tree species was able to promote all services 
 
-# Input data: Swedish national forest inventory and Survey of forest soils and vegetation
+# Input data: 
+# -------------
+# Swedish national forest inventory and Survey of forest soils and vegetation
 # only on 'productive forests' = average production of standing volume, stem volume over bark >1m3/ha/year
 # which has not been harvested, cleared, thnned the 5 years before teh survey
 # non peat soil
-
 # get effect sizes to understand the contribution of individual factors
 
 
 # Explanatory variables:
-# temperature - total accumulated average daily temperature (degree C) over 5C during veget.period
-# humidity    - difference in mm between precipitation and evaporation
-# nitrogen deposition (kg N/ha/year) - meteo 
-# c_n = carbon to nitrogen ration i the top soils
-# soil moisture : categorical: 1 (driest) -5 (wettest) ~ corresponds to continuous % volumetric soil content
-# 
+# --------------------
+# - temperature - total accumulated average daily temperature (degree C) over 5C during veget.period
+# - humidity    - difference in mm between precipitation and evaporation
+# - nitrogen deposition (kg N/ha/year) - meteo 
+# - c_n = carbon to nitrogen ration i the top soils
+# - soil moisture : categorical: 1 (driest) -5 (wettest) ~ corresponds to continuous % volumetric soil content
+# - etc, specified below as dummy data
+
+# 2021/01/04 
+# Seems that example works for the tree biomass production
+
+# To solve: 
+# - need to check/ask how the PEAT is coded ? Should be 0, 1 as binary, but mean is 0.08? Should we treat it as categoriacal (dummy variable?)
+# - no transformations are included (Table S2) - is this ok for all services?
+# - if calculation for biomass is correct, need that Tord will provide estimates from Fig. 4 - now we need to get them visually !!
+# - how to create from data the Bayesian uncertainity values? is it ok to include the range of the beta estimates into the model to get the range?
+# - for further SIMO variables: only age, species and maybe richness will change. 
+# - maybe we can get spatially differentiated predictiorns in temperature, mosture and humidity values, to apply it over Finland on NFI dataset for Clemens?
 
 
+
+
+# ------------------------------------------
 # Generate dummy predictors
 # ------------------------------------------
 
-
-# Create dummy data 
-# use truncnorm library to define both min, man, mean and sd
+# use truncnorm library to define normal distribution both min, man, mean and sd
 # https://stackoverflow.com/questions/19343133/setting-upper-and-lower-limits-in-rnorm
 
 library(truncnorm)
@@ -60,7 +74,7 @@ age       = rtruncnorm(n=n_row, a=1,    b=315,  mean=64.5, sd=45.6)
 pH        = rtruncnorm(n=n_row, a=3.1,  b=7.9,  mean=4,    sd=0.63) 
 c_n_ratio = rtruncnorm(n=n_row, a=11,   b=90,   mean=30.8, sd=9.7)
 moisture  = rtruncnorm(n=n_row, a=0.15, b=0.35, mean=0.22, sd=0.03)
-peat      = sample(c(0,1), replace = TRUE, size = n_row)  # peat is binary; how it coud be mean 0.08 and sd 0.27? is it propostion of sites?
+peat      = sample(c(0,1), replace = TRUE, size = n_row)  # peat should be binary; how it coud be mean 0.08 and sd 0.27? is it propostion of sites?
 spruce    = rtruncnorm(n=n_row, a=0, b=59.4,    mean=4.5,  sd=6.7)
 pine      = rtruncnorm(n=n_row, a=0, b=33.6,    mean=3.6,  sd=4.6)
 birch     = rtruncnorm(n=n_row, a=0, b=21.0,    mean=0.97, sd=2.0)
@@ -75,35 +89,22 @@ beech     = rtruncnorm(n=n_row, a=0, b=33.8,    mean=0.11, sd=1.3)
 df <- data.frame(temp,
                  humidity,
                  N_depo, 
-                 #temp_N_depo = temp*N_depo,
-                # humidity_N_depo = humidity*N_depo,
                  richness,
-                # richness_sq = richness^2,
                  age,
-                 #age_sq = age^2,
-               #  rich_age = richness*age,
                  pH,
-                # pH_sq = pH^2,  
                  c_n_ratio,
                  moisture,
-                # moisture_sq = moisture^2,
                  peat,
-                # rich_pH  = richness*pH,
-                # rich_c_n = richness*c_n_ratio,
-                 #rich_moisture = richness*moisture,
                  spruce,
                  pine,
                  birch, 
                  oak,
                  aspen,
-                 beech ) #, 
-                 #spruce_age = spruce*age,
-                # pine_age   = pine*age,
-                # birch_age  = birch*age)
+                 beech) #, 
+                
 
-# Center and standdardize the row data, then add square variables and interactions
+# Center and standardize the row data, then add square variables and interactions
 # -------------------------------------
-# make a function'
 
 # need to center (substract the mean) and standardize (divide by sd) teh variables
 # centering the variables: mean of predictors = 0
@@ -112,6 +113,7 @@ df <- data.frame(temp,
 # scaling useful if variables are on different scales
 # Centering must be done on raw values, before interaction, and before setting polynomial terms (squaring!)
 
+# Make a function
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
 # Centralize and standardize the raw values
@@ -120,6 +122,8 @@ df_cent <-
   mutate_all(scale2)
 
 
+# Complete centered table
+# --------------------------
 # Add squared and interaction predictors,
 # add for intercept value 1 as it will be later added
 df_cent <- df_cent %>% 
@@ -173,14 +177,14 @@ col_order = c('intercept',
               'humidity_N_depo')
 
 
-# Order df colums to fit coefficients
-# ------------------------------------
+# Order df colums to fit coefficients vector
+# -------------------------------------------
 df_cent <- df_cent[, col_order]
 
-# !!!
+# !!! ---------------------------
 # List coefficients: numbers are guessed from Fig. 4 as they are not included in 
 # the article, neither in Suipplementary materials
-# !!!
+# !!! ---------------------------
 coeff_biomass = c( 1,    # for intercept
                    0.08,
                   -0.01,
