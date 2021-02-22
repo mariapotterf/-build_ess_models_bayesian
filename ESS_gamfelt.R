@@ -1,4 +1,3 @@
-
 # --------------------------------------
 # Get models from Gamfelt et al. 2013
 # --------------------------------------
@@ -22,7 +21,7 @@
 # -------------
 # Swedish national forest inventory and Survey of forest soils and vegetation
 # only on 'productive forests' = average production of standing volume, stem volume over bark >1m3/ha/year
-# which has not been harvested, cleared, thnned the 5 years before teh survey
+# which has not been harvested, cleared, thinned the 5 years before teh survey
 # non peat soil
 # get effect sizes to understand the contribution of individual factors
 
@@ -68,13 +67,13 @@ n_row = 10  # get lenght of generated numbers
 # List variables 
 temp      = rtruncnorm(n=n_row, a=420,  b=1690, mean=1087, sd=276)
 humidity  = rtruncnorm(n=n_row, a=-60,  b=225,  mean=43,   sd=59.5)
-N_depo    = rtruncnorm(n=n_row, a=2.0,  b=18.5, mean=6.6,  sd=2.8)  
+N_depo    = rtruncnorm(n=n_row, a=2.0,  b=18.5, mean=6.6,  sd=3.8)  
 richness  = rtruncnorm(n=n_row, a=0,    b=10,   mean=2.5,  sd=1.1)
 age       = rtruncnorm(n=n_row, a=1,    b=315,  mean=64.5, sd=45.6)
 pH        = rtruncnorm(n=n_row, a=3.1,  b=7.9,  mean=4,    sd=0.63) 
 c_n_ratio = rtruncnorm(n=n_row, a=11,   b=90,   mean=30.8, sd=9.7)
 moisture  = rtruncnorm(n=n_row, a=0.15, b=0.35, mean=0.22, sd=0.03)
-peat      = sample(c(0,1), replace = TRUE, size = n_row)  # peat should be binary; how it coud be mean 0.08 and sd 0.27? is it propostion of sites?
+peat      = sample(c(0,1), replace = TRUE, size = n_row, prob=c(0.92, 0.08))  # peat should be binary; how it coud be mean 0.08 and sd 0.27? is it propostion of sites?  #Daniel>> It is binary. Mean reflects the proportion of "successes", in this case "Peat substrate". The sd, is useless in binary; it can be calculated but doesn't add further info. If you want to play with a dataset more similar than the original, you can specify the probablility; In this case prob=c(0.92, 0.08)) . This will affect the confidence intervals a bit for this variable
 spruce    = rtruncnorm(n=n_row, a=0, b=59.4,    mean=4.5,  sd=6.7)
 pine      = rtruncnorm(n=n_row, a=0, b=33.6,    mean=3.6,  sd=4.6)
 birch     = rtruncnorm(n=n_row, a=0, b=21.0,    mean=0.97, sd=2.0)
@@ -103,12 +102,12 @@ df <- data.frame(temp,
                  beech) #, 
                 
 
-# Center and standardize the row data, then add square variables and interactions
+# Center and standardize the raw data, then add square variables and interactions
 # -------------------------------------
 
-# need to center (substract the mean) and standardize (divide by sd) teh variables
+# need to center (substract the mean) and standardize (divide by sd) the variables
 # centering the variables: mean of predictors = 0
-# facilitate interpretation of intercept = Y, if teh X are set to their means
+# facilitate interpretation of intercept = Y, if the X are set to their means
 # intercept = Y if all X are 0
 # scaling useful if variables are on different scales
 # Centering must be done on raw values, before interaction, and before setting polynomial terms (squaring!)
@@ -116,7 +115,7 @@ df <- data.frame(temp,
 # Make a function
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
-# Centralize and standardize the raw values
+# Center and standardize the raw values
 df_cent <- 
   df %>% 
   mutate_all(scale2)
@@ -184,7 +183,15 @@ df_cent <- df_cent[, col_order]
 # !!! ---------------------------
 # List coefficients: numbers are guessed from Fig. 4 as they are not included in 
 # the article, neither in Suipplementary materials
-# !!! ---------------------------
+# !!! 
+
+#Daniel >> it is a pity... I don't know how they are guessed but I see two options
+# 1 - use a figure data extracting tool. Those are widely used for systematic reviews. a good one is this https://automeris.io/WebPlotDigitizer/
+# 2 - get the original data and re-run the analyses. 
+
+# re-running the analyses is doable, but not as fast as option 1. 
+
+#---------------------------
 coeff_biomass = c( 1,    # for intercept
                    0.08,
                   -0.01,
@@ -243,6 +250,8 @@ mean(df_sums)
 # Daniel: Does this calculation of the ESs seems correct?
 # ---------------------------------------------------
 
+#Daniel >> this is very correct!!  I think that the difference is due to eye-balling the values from the figure
+
 
 
 
@@ -272,6 +281,9 @@ mean(df_sums)
 # It seems, that as I already know the estimates, I do not need the full Bayesian model, but it is enought to 
 # have just yESS = alpha + sum(B*x) for each of 6 services
 # ---------------------------------------------
+## Daniel >>  yes, as you are not interested in confidence intervals it is ok to do as oyu have done it!
+
+
 
 # Hierarchical models:
 
