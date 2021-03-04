@@ -35,16 +35,22 @@
 # - soil moisture : categorical: 1 (driest) -5 (wettest) ~ corresponds to continuous % volumetric soil content
 # - etc, specified below as dummy data
 
-# 2021/01/04 
-# Seems that example works for the tree biomass production
+# Predict ESs values
+# --------------------------
+# Estimates are showed in Fig. 4.  Therefore, maybe no need to reproduce the full Bayesian model, but we  can guess/get values using https://automeris.io/WebPlotDigitizer/
+# have just yESS = alpha + sum(B*x) for each of 6 services
+# 
+
 
 # To solve: 
+# ---------------------------
 # - need to check/ask how the PEAT is coded ? Should be 0, 1 as binary, but mean is 0.08? Should we treat it as categoriacal (dummy variable?)
 # - no transformations are included (Table S2) - is this ok for all services?
 # - if calculation for biomass is correct, need that Tord will provide estimates from Fig. 4 - now we need to get them visually !!
 # - how to create from data the Bayesian uncertainity values? is it ok to include the range of the beta estimates into the model to get the range?
 # - for further SIMO variables: only age, species and maybe richness will change. 
 # - maybe we can get spatially differentiated predictiorns in temperature, mosture and humidity values, to apply it over Finland on NFI dataset for Clemens?
+# - OK to use https://automeris.io/WebPlotDigitizer/ to get coefficients of Tord has raw values somewhere? 
 
 
 
@@ -182,16 +188,15 @@ df_cent <- df_cent[, col_order]
 
 # !!! ---------------------------
 # List coefficients: numbers are guessed from Fig. 4 as they are not included in 
-# the article, neither in Suipplementary materials
+# the article, neither in Supplementary materials
 # !!! 
+# Daniel: extract data from the plot by clicking from https://automeris.io/WebPlotDigitizer/
+# further need to extract the intervals as well
+# or rerun the whole analysis?
 
-#Daniel >> it is a pity... I don't know how they are guessed but I see two options
-# 1 - use a figure data extracting tool. Those are widely used for systematic reviews. a good one is this https://automeris.io/WebPlotDigitizer/
-# 2 - get the original data and re-run the analyses. 
 
-# re-running the analyses is doable, but not as fast as option 1. 
 
-#---------------------------
+# Get coefficientss (eye-guess) ---------------------------
 coeff_biomass = c( 1,    # for intercept
                    0.08,
                   -0.01,
@@ -223,39 +228,37 @@ coeff_biomass = c( 1,    # for intercept
                    0)
 
 
-# gettig the data from the figure using https://automeris.io/WebPlotDigitizer/
-coeff_biomass = c( 1,    # for intercept
-                   0.70469799,
-                  -0.09261745,
-                  -0.219463087,
-                  0.05033557,
-                  0.009261745,
-                  0.000402685,
-                  -0.035838926,
-                  -0.021342282,
-                  0.001208054,
-                  -0.011677852,
+# get coefficients from the plot (web digitizer)
+# gettig the data from the figure using https://automeris.io/WebPlotDigitizer/ -------------------------------
+coeff_biomass = c( 1,           # for intercept
+                   0.70469799,  # rich
+                  -0.09261745,  # rich sq
+                  -0.219463087, # age
+                  0.05033557,   # age sq
+                  0.009261745,  # pH
+                  0.000402685,  
+                  -0.035838926, # 
+                  -0.021342282, # C:N
+                  0.001208054,  # moist
+                  -0.011677852, # Peat
                   0,
                   0.002013423,
                   -0.015704698,
-                  0.008456376,
-                  0.231543624,
-                  0.145369128,
-                  0.067248322,
-                  0,
-                  0.01409396,
-                  0,
+                  0.008456376,  
+                  0.231543624,  # spruce
+                  0.145369128,  # pine
+                  0.067248322,  # birch
+                  0,            # oak
+                  0.01409396,   # aspen
+                  0,            # beech
                   -0.155838926,
                   -0.118791946,
                   -0.057583893,
-                  0.010067114,
-                  0.006845638,
-                  0,
-                  0,
+                  0.010067114,  # temperature
+                  0.006845638,  # humidity
+                  0,            # N deposition
+                  0,            # 
                   0)
-
-
-
 
 
 # Seems that individual ESS have individual gamma, from Supplementary Table S3
@@ -282,11 +285,6 @@ mean(df_sums)
 # 0.5517183, +- correspond to 0.43 as mean in the output table
 
 # 0.4580408, using https://automeris.io/WebPlotDigitizer/ closer to the 0.43!!
-# ---------------------------------------------------
-# Daniel: Does this calculation of the ESs seems correct?
-# ---------------------------------------------------
-
-#Daniel >> this is very correct!!  I think that the difference is due to eye-balling the values from the figure
 
 
 
@@ -300,28 +298,7 @@ mean(df_sums)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# ---------------------------------------------
-# From here:
-# It seems, that as I already know the estimates, I do not need the full Bayesian model, but it is enought to 
-# have just yESS = alpha + sum(B*x) for each of 6 services
-# ---------------------------------------------
-## Daniel >>  yes, as you are not interested in confidence intervals it is ok to do as oyu have done it!
-
-
-
-# Hierarchical models:
+# Example of Hierarchical models:
 
 library(HBglm)
 
