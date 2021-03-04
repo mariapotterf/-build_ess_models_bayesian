@@ -1,4 +1,3 @@
-
 # --------------------------------------
 # Get models from Gamfelt et al. 2013
 # --------------------------------------
@@ -216,6 +215,41 @@ coeff_biomass = c( 1,    # for intercept
                    0)
 
 
+# gettig the data from the figure using https://automeris.io/WebPlotDigitizer/
+coeff_biomass = c( 1,    # for intercept
+                   0.70469799,
+                  -0.09261745,
+                  -0.219463087,
+                  0.05033557,
+                  0.009261745,
+                  0.000402685,
+                  -0.035838926,
+                  -0.021342282,
+                  0.001208054,
+                  -0.011677852,
+                  0,
+                  0.002013423,
+                  -0.015704698,
+                  0.008456376,
+                  0.231543624,
+                  0.145369128,
+                  0.067248322,
+                  0,
+                  0.01409396,
+                  0,
+                  -0.155838926,
+                  -0.118791946,
+                  -0.057583893,
+                  0.010067114,
+                  0.006845638,
+                  0,
+                  0,
+                  0)
+
+
+
+
+
 # Seems that individual ESS have individual gamma, from Supplementary Table S3
 # I will neglect all sigmas values. my tracts variables are already included
 # Get estimate for biomass
@@ -239,6 +273,7 @@ mean(df_sums)
 
 # 0.5517183, +- correspond to 0.43 as mean in the output table
 
+# 0.4580408, using https://automeris.io/WebPlotDigitizer/ closer to the 0.43!!
 # ---------------------------------------------------
 # Daniel: Does this calculation of the ESs seems correct?
 # ---------------------------------------------------
