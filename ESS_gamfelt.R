@@ -35,6 +35,7 @@
 # - soil moisture : categorical: 1 (driest) -5 (wettest) ~ corresponds to continuous % volumetric soil content
 # - etc, specified below as dummy data
 
+
 # Predict ESs values
 # --------------------------
 # Estimates are showed in Fig. 4.  Therefore, maybe no need to reproduce the full Bayesian model, but we  can guess/get values using https://automeris.io/WebPlotDigitizer/
@@ -48,10 +49,14 @@
 # - no transformations are included (Table S2) - is this ok for all services?
 # - if calculation for biomass is correct, need that Tord will provide estimates from Fig. 4 - now we need to get them visually !!
 # - how to create from data the Bayesian uncertainity values? is it ok to include the range of the beta estimates into the model to get the range?
+# - OK to use https://automeris.io/WebPlotDigitizer/ to get coefficients or Tord has raw values somewhere? 
+
+  
+# Application for  SIMO:
+# ------------------------------------------------
 # - for further SIMO variables: only age, species and maybe richness will change. 
 # - maybe we can get spatially differentiated predictiorns in temperature, mosture and humidity values, to apply it over Finland on NFI dataset for Clemens?
-# - OK to use https://automeris.io/WebPlotDigitizer/ to get coefficients of Tord has raw values somewhere? 
-
+# 
 
 
 
