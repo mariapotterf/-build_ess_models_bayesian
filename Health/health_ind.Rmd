@@ -1,0 +1,194 @@
+---
+title: "Health dimensions by regimes"
+author: "Maria Potterf"
+date: "August 5, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Forest health indicators for SIMO
+
+
+- **Shelter**:   forest density > 5000 stems/ha, height < 5 m
+- **Serenity**:  distance to roads ?
+- **Diversity**: deadwood, diversity of tree species ?
+- **Nature**:    mean age > 100 years
+- **Cohesion**:  stand area > 20 ha
+
+### How to combine dimensions? 
+
+- **Edges/glades**:    shelter, nature, diversity
+- **Deep forest**:     nature, shelter, serenity
+- **Spacious forest**: cohesion, serenity, nature
+
+
+### Forest management regimes:
+
+Select the most diverse mamagement regimes: 
+
+- **BAU** - business as usual: final cut, including thinnings
+- **CCF** - continuous cover forestry, no final cut
+- **SA**  - set aside, no harvest
+
+Variation in regimes:
+
+- in rotation lenght
+- in final harvest type (yes, no, green tree retention)
+- variation in thinnings: no thinnings
+
+``` {r read-libs, include=FALSE}
+rm(list = ls())
+
+#setwd("C:/MyTemp/myGitLab/windDamage")
+
+# Read libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(sf)
+library(rgdal)
+library(dplyr)
+library(spData)
+library(sf)
+
+```
+
+
+```{r get-data, include=FALSE}
+
+inPath = "C:/MyTemp/myGitLab/windDamage/manuscript_regimes"
+inFolder = "input_CC"
+
+# Read data
+df <- data.table::fread(paste(inPath, 
+                              inFolder, 
+                              'without_MV_Korsnas_rsu.csv',  
+                              sep = "/"),  
+                        data.table=FALSE, stringsAsFactors = FALSE)
+
+
+```
+
+### Distribution of stands by selected variables:
+
+Distributions of selected variables depends on selection of study site!! E.g. depends on the N-S gradient.
+
+This example: from Korsnas, Finland, 300 stands
+
+![Fig. 1: Map of Korsnas stands, and position within Finland](C:/MyTemp/myGitLab/bayesianESS/build_ess_models_bayesian/Health/Korsnas_map.PNG)
+
+### Dimensions
+
+#### Shelter:
+
+- stands with height < 5 m and density (N) > 5000 trees/ha:
+
+**Very few stands, need to adjust the density?**
+
+```{r N-density, echo=FALSE, fig.dim = c(3, 3), include=FALSE}
+
+# Filter data
+
+df <- df %>% 
+  filter(H_dom < 100) %>% 
+  filter(regime %in% c("BAU", "CCF_2", "SA_DWextract"))
+  
+df %>% 
+  #filter(H_dom < 5) %>% 
+  filter(N > 5000) %>% 
+  ggplot(aes(N,
+             fill = regime)) +
+  geom_density(alpha = 0.5) + 
+  theme_classic() +
+  theme(legend.position = 'none')
+```
+
+What is the relationship between stand density and tree height?
+
+```{r scatter-density, echo = FALSE, fig.dim = c(7, 2.5), message=FALSE}
+
+df <- df %>% 
+  filter(H_dom < 100) %>% 
+  filter(regime %in% c("BAU", "CCF_2", "SA_DWextract"))
+  
+#df %>% 
+  #filter(H_dom < 5) %>% 
+#  filter(N > 5000) %>% 
+#  summarize(min = min(H_dom, na.rm = T),
+  #          max = max(H_dom, na.rm = T)) 
+
+
+df %>% 
+ ggplot(aes(x = N,
+            y = H_dom,
+            color = regime)) +
+  geom_point(alpha = 0.5) + 
+  geom_hline(yintercept = 5, 
+             col = "red") +
+  geom_vline(xintercept = 5000, 
+             col = "red") + 
+  theme_classic() +
+  ylab("Tree height (m)") +
+  xlab("N trees/ha") +
+  facet_grid(.~regime) +
+  theme(legend.position = 'right')
+
+
+
+```
+
+#### Serenity: 
+
+- disance from major roads
+- Daniel show road network over the forest stand geometry?
+
+#### Diversity:  
+
+- deadwood, tree species  on stand level
+- discuss and complete today
+
+#### Nature: 
+
+- age > 100 years old (100-140)
+
+Mean age of all stands is  `r round(mean(df$Age), 1)` years old. Distribution by regimes: 
+
+```{r hist-age, echo=FALSE, fig.dim = c(7, 2.5), message=FALSE}
+
+df %>% 
+  ggplot(aes(x = Age,
+             fill = regime)) +
+  geom_histogram() +
+  geom_vline(xintercept = 100) + 
+  facet_grid(.~regime) +
+     theme(legend.position = 'bottom') +
+  theme_classic()
+ 
+
+```
+
+#### Cohesion:
+
+- stands over 20 ha 
+
+20 ha to m2 = 200.000 m2, e.g. 450*450 m
+- too large stands?? Mean stand area is `r round(mean(df$AREA, na.rm = T), 1)` ha. 
+
+```{r hist-AREA, echo=FALSE, fig.dim = c(3, 2.5), message=FALSE}
+
+df %>% 
+  filter(year == 2016 & regime == "BAU") %>% 
+  ggplot(aes(x = AREA,
+             fill = regime)) +
+  geom_histogram() +
+  #geom_vline(xintercept = 20) + 
+  theme_classic() +
+   theme(legend.position = 'none') +
+  xlab("area (ha)") 
+ 
+```
+
+
