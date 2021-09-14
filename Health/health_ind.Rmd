@@ -106,6 +106,7 @@ df$richness <- rowSums( !is.na( select(df, c(V_pine, V_spruce, V_Birch_1, V_Birc
 
 # Get proportion of volume per species from total volume: `V`
 # select all columns containing species and divide it bu total volume
+# reclassify based on rule: diverse if <70% of volume is made by one species
 df.prop = select(df, c(V_pine, V_spruce, V_Birch_1, V_Birch_2, V_populus, V_Alnus_incana, V_Alnus_glutinosa, V_o_coniferous, V_o_decidious))/df$V*100
 
   
