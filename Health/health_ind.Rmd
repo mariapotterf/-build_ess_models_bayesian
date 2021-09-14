@@ -12,11 +12,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Forest health indicators for SIMO
 
 
-- **Shelter**:   forest density > 5000 stems/ha, height < 5 m
-- **Serenity**:  distance to roads ?
-- **Diversity**: deadwood, diversity of tree species ?
-- **Nature**:    mean age > 100 years
-- **Cohesion**:  stand area > 20 ha
+- **Shelter**:   even/uneven aged forest: even-aged= if 80% of the volume is located in age classes 20 years apart
+- **Serenity**:  if distant > 400m from road at 70km/h
+- **Diversity**: Volume for individual species & count; Volume share by species? If > 70%, then not a diverse forest
+- **Nature**:    mean age > 100 years; Age_vol, Age_ba (lower than Age_vol)
+- **Cohesion**:  stand area > 1 ha
 
 ### How to combine dimensions? 
 
@@ -27,7 +27,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Forest management regimes:
 
-Select the most diverse mamagement regimes: 
+Select the most diverse management regimes: 
 
 - **BAU** - business as usual: final cut, including thinnings
 - **CCF** - continuous cover forestry, no final cut
@@ -35,7 +35,7 @@ Select the most diverse mamagement regimes:
 
 Variation in regimes:
 
-- in rotation lenght
+- in rotation length
 - in final harvest type (yes, no, green tree retention)
 - variation in thinnings: no thinnings
 
@@ -53,30 +53,74 @@ library(rgdal)
 library(dplyr)
 library(spData)
 library(sf)
+library(purrr)
 
 ```
 
 
 ```{r get-data, include=FALSE}
 
-inPath = "C:/MyTemp/myGitLab/windDamage/manuscript_regimes"
-inFolder = "input_CC"
+inPath = "C:/MyTemp/myGitLab/bayesianESS/build_ess_models_bayesian"
+inFolder = "input"
 
 # Read data
 df <- data.table::fread(paste(inPath, 
                               inFolder, 
-                              'without_MV_Korsnas_rsu.csv',  
+                              'RCP85_p_SA_1501-1800_n4.csv',  
                               sep = "/"),  
                         data.table=FALSE, stringsAsFactors = FALSE)
 
 
+str(df)
+
 ```
+
+
+```{r inspect-data}
+
+# how does the frequency of even-uneven change over years?
+
+df %>% 
+  group_by(year) %>% 
+  count(quality) #%>% 
+  ggplot(aes(x = year,
+             y = n,
+             color = quality)) + 
+  geom_line()
+
+  
+# There are still many NA values, why?
+  
+df %>%  
+  filter(is.na(quality)) %>% 
+  distinct(id)
+
+
+
+
+# Calculate the volume proportion by species, V = total volume
+# count how many species are present = richness
+# e.g. count number of species (= columns) that volume is not NA
+df$richness <- rowSums( !is.na( select(df, c(V_pine, V_spruce, V_Birch_1, V_Birch_2, V_populus, V_Alnus_incana, V_Alnus_glutinosa, V_o_coniferous, V_o_decidious))))
+
+
+# Get proportion of volume per species from total volume: `V`
+# select all columns containing species and divide it bu total volume
+df.prop = select(df, c(V_pine, V_spruce, V_Birch_1, V_Birch_2, V_populus, V_Alnus_incana, V_Alnus_glutinosa, V_o_coniferous, V_o_decidious))/df$V*100
+
+  
+
+```
+
+
 
 ### Distribution of stands by selected variables:
 
 Distributions of selected variables depends on selection of study site!! E.g. depends on the N-S gradient.
 
 This example: from Korsnas, Finland, 300 stands
+
+
 
 ![Fig. 1: Map of Korsnas stands, and position within Finland](C:/MyTemp/myGitLab/bayesianESS/build_ess_models_bayesian/Health/Korsnas_map.PNG)
 
