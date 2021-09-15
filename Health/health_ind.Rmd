@@ -108,7 +108,8 @@ df <- data.table::fread(paste(inPath,
 # Filter data first
 my_regimes = c("SA_DWextract", "BAU",  "CCF", "BAUwT_GTR")
 my_cols = c("id",
-           "year", 
+           "year",
+           'AREA',
            "branching_group", 
            "Age", 
            "BA", 
@@ -152,23 +153,6 @@ df <- df %>%
 ```
 
 
-```{r inspect-data, include=FALSE}
-
-# how does the frequency of even-uneven change over years?
-
-df %>% 
-  group_by(year, regime) %>% 
-  count(quality)  %>% 
-  ggplot(aes(x = year,
-             y = n,
-             color = quality)) + 
-  geom_line() + 
-  facet_grid(.~regime)
-
-  
-
-```
-
 'quality' variable contains many NA values: these follows recent harvest, e.g. H_dom (tree height) is NA or very low. Consider these as 'no forest', or keep as NA
   
 
@@ -209,13 +193,13 @@ df.V.prop = select(df, all_of(cols_species))/df$V*100
 
 
 # Classify as mixed/no mixed if any of species column have less then 70% of volume in single species 
-df$diverse <- 
+df$q_mixed <- 
   df.V.prop %>%
    rowwise() %>%
-  mutate(diversity = case_when(all(is.na(c_across())) ~ NA_character_, 
+  mutate(q_mixed = case_when(all(is.na(c_across())) ~ NA_character_, 
                             any(c_across() >= 70) ~ 'uniform', 
                             TRUE ~ 'mixed')) %>% 
-    pull(diversity)
+    pull(q_mixed)
 
 
 ```
@@ -253,9 +237,24 @@ df <-
 
 #### Diversity:  
 
-- diverse if species are mixed (e.g. >70% of the )
+- diverse if species are mixed (e.g. >70% of the species volume is created by more then one species)
 
-#### Nature: 
+
+```{r diversity, echo=FALSE, fig.dim = c(3, 3), include=FALSE}
+
+# Classify diversity
+
+df <- 
+  df %>% 
+  mutate(divers = case_when(
+    mixed == "q_mixed" ~ 1, 
+    TRUE~ 0)) 
+
+```
+
+
+
+#### Naturalness: 
 
 - age > 100 years old (100-140)
 
@@ -264,7 +263,7 @@ Mean age of all stands is  `r round(mean(df$Age), 1)` years old. Distribution by
 ```{r hist-age, echo=FALSE, fig.dim = c(7, 2.5), message=FALSE}
 
 df %>% 
-  ggplot(aes(x = Age,
+  ggplot(aes(x = AGE_vol,
              fill = regime)) +
   geom_histogram() +
   geom_vline(xintercept = 100) + 
