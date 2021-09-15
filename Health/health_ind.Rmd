@@ -247,7 +247,7 @@ df <-
 df <- 
   df %>% 
   mutate(divers = case_when(
-    mixed == "q_mixed" ~ 1, 
+    q_mixed == "mixed" ~ 1, 
     TRUE~ 0)) 
 
 ```
