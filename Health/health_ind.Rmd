@@ -258,7 +258,7 @@ df <-
 
 - age > 100 years old (100-140)
 
-Mean age of all stands is  `r round(mean(df$Age), 1)` years old. Distribution by regimes: 
+Mean age of all stands is  `r round(mean(df$AGE_vol), 1)` years old. Distribution by regimes: 
 
 ```{r hist-age, echo=FALSE, fig.dim = c(7, 2.5), message=FALSE}
 
@@ -276,10 +276,9 @@ df %>%
 
 #### Cohesion:
 
-- stands over 20 ha 
+- stands over 1 ha 
 
-20 ha to m2 = 200.000 m2, e.g. 450*450 m
-- too large stands?? Mean stand area is `r round(mean(df$AREA, na.rm = T), 1)` ha. 
+Mean stand area is `r round(mean(df$AREA, na.rm = T), 1)` ha. 
 
 ```{r hist-AREA, echo=FALSE, fig.dim = c(3, 2.5), message=FALSE}
 
