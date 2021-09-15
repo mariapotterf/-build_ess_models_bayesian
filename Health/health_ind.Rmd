@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 - **Shelter**:   even/uneven aged forest: even-aged= if 80% of the volume is located in age classes 20 years apart
 - **Serenity**:  if distant > 400m from road at 70km/h
 - **Diversity**: Volume for individual species & count; Volume share by species? If > 70%, then not a diverse forest
-- **Nature**:    mean age > 100 years; Age_vol, Age_ba (lower than Age_vol)
+- **Nature**:    mean age > 100 years; Age_VOL, Age_BA (lower than Age_vol)
 - **Cohesion**:  stand area > 1 ha
 
 ### How to combine dimensions? 
@@ -57,6 +57,39 @@ library(purrr)
 
 ```
 
+# New indicators from SIMO output querry calculated for health purposes:
+
+###  Naturalness: 
+"AGE_vol" - age weighthed by volume                   
+"AGE_ba"  - age weighthed by basal area
+
+### Shelter:
+"quality" - even/uneven age: even-age = if 80% of volume is located within range of 20 years
+
+Presence of the layers of less then 2 m: classify to present/absent
+
+"Layers_lt_2m"    - number of layers under 2 m          
+"Layers_lt_2m_N"  - number of stems/ha under 2 m
+"Layers_lt_5m"    - number of layers under 5 m         
+"Layers_lt_5m_N"  - number of stems/ha under 5 m
+
+### Diversity: 
+- mixed if less then 70% of teh volume belong to one species
+
+Tree species: 
+
+by volume
+
+"V_pine"                    "V_spruce"                 
+"V_Birch_1"                 "V_Birch_2"                
+"V_populus"                 "V_Alnus_incana"           
+"V_Alnus_glutinosa"         "V_o_coniferous"           
+"V_o_decidious"                               
+          
+       
+
+
+
 
 ```{r get-data, include=FALSE}
 
@@ -66,134 +99,161 @@ inFolder = "input"
 # Read data
 df <- data.table::fread(paste(inPath, 
                               inFolder, 
-                              'RCP85_p_SA_1501-1800_n4.csv',  
+                              "RCP85_p_301-600_l3.csv",  
                               sep = "/"),  
                         data.table=FALSE, stringsAsFactors = FALSE)
 
 
-str(df)
+
+# Filter data first
+my_regimes = c("SA_DWextract", "BAU",  "CCF", "BAUwT_GTR")
+my_cols = c("id",
+           "year", 
+           "branching_group", 
+           "Age", 
+           "BA", 
+            "V", 
+           #"Harvested_V_log",
+           #"Harvested_V_pulp", 
+          #"PEAT",
+            "H_dom"  ,
+            # "D_gm", 
+            #     "COMBINED_HSI"  
+            "AGE_vol", 
+            #"AGE_ba", 
+            "V_pine",
+           "V_spruce",
+           "V_Birch_1",
+           "V_Birch_2",
+           "V_populus",
+           "V_Alnus_incana",
+           "V_Alnus_glutinosa",
+           "V_o_coniferous",
+           "V_o_decidious",
+           "quality",
+           "Layers_lt_2m",
+           "Layers_lt_5m",
+           "Layers_lt_2m_N",
+           "Layers_lt_5m_N",
+            "name", 
+           "regime")
+
+
+df <- df %>% 
+  filter(regime %in% my_regimes) %>% 
+  dplyr::select(all_of(my_cols))
+
+
+#str(df)
+
+
+
 
 ```
 
 
-```{r inspect-data}
+```{r inspect-data, include=FALSE}
 
 # how does the frequency of even-uneven change over years?
 
 df %>% 
-  group_by(year) %>% 
-  count(quality) #%>% 
+  group_by(year, regime) %>% 
+  count(quality)  %>% 
   ggplot(aes(x = year,
              y = n,
              color = quality)) + 
-  geom_line()
+  geom_line() + 
+  facet_grid(.~regime)
 
   
-# There are still many NA values, why?
+
+```
+
+'quality' variable contains many NA values: these follows recent harvest, e.g. H_dom (tree height) is NA or very low. Consider these as 'no forest', or keep as NA
   
-df %>%  
-  filter(is.na(quality)) %>% 
-  distinct(id)
+
+# Calculate the % of species by volume
+
+if any of the species has more that > 70% of volume, that the stands is not mixed = not diverse
 
 
-
-
+```{r get-metrics, include=FALSE}
 # Calculate the volume proportion by species, V = total volume
 # count how many species are present = richness
 # e.g. count number of species (= columns) that volume is not NA
-df$richness <- rowSums( !is.na( select(df, c(V_pine, V_spruce, V_Birch_1, V_Birch_2, V_populus, V_Alnus_incana, V_Alnus_glutinosa, V_o_coniferous, V_o_decidious))))
+
+library(dplyr)
+
+cols_species = c(
+  'V_pine',
+  'V_spruce',
+  'V_Birch_1',
+  'V_Birch_2',
+  'V_populus',
+  'V_Alnus_incana',
+  'V_Alnus_glutinosa',
+  'V_o_coniferous',
+  'V_o_decidious'
+)
+
+
+
+# Count number or columns that have some volume (exist) in a stand
+df$richness <- rowSums( !is.na( select(df, all_of(cols_species))))
 
 
 # Get proportion of volume per species from total volume: `V`
 # select all columns containing species and divide it bu total volume
 # reclassify based on rule: diverse if <70% of volume is made by one species
-df.prop = select(df, c(V_pine, V_spruce, V_Birch_1, V_Birch_2, V_populus, V_Alnus_incana, V_Alnus_glutinosa, V_o_coniferous, V_o_decidious))/df$V*100
+df.V.prop = select(df, all_of(cols_species))/df$V*100
 
-  
+
+# Classify as mixed/no mixed if any of species column have less then 70% of volume in single species 
+df$diverse <- 
+  df.V.prop %>%
+   rowwise() %>%
+  mutate(diversity = case_when(all(is.na(c_across())) ~ NA_character_, 
+                            any(c_across() >= 70) ~ 'uniform', 
+                            TRUE ~ 'mixed')) %>% 
+    pull(diversity)
+
 
 ```
 
 
-
-### Distribution of stands by selected variables:
-
-Distributions of selected variables depends on selection of study site!! E.g. depends on the N-S gradient.
-
-This example: from Korsnas, Finland, 300 stands
-
-
-
-![Fig. 1: Map of Korsnas stands, and position within Finland](C:/MyTemp/myGitLab/bayesianESS/build_ess_models_bayesian/Health/Korsnas_map.PNG)
 
 ### Dimensions
 
 #### Shelter:
 
-- stands with height < 5 m and density (N) > 5000 trees/ha:
-
-**Very few stands, need to adjust the density?**
-
-```{r N-density, echo=FALSE, fig.dim = c(3, 3), include=FALSE}
-
-# Filter data
-
-df <- df %>% 
-  filter(H_dom < 100) %>% 
-  filter(regime %in% c("BAU", "CCF_2", "SA_DWextract"))
-  
-df %>% 
-  #filter(H_dom < 5) %>% 
-  filter(N > 5000) %>% 
-  ggplot(aes(N,
-             fill = regime)) +
-  geom_density(alpha = 0.5) + 
-  theme_classic() +
-  theme(legend.position = 'none')
-```
-
-What is the relationship between stand density and tree height?
-
-```{r scatter-density, echo = FALSE, fig.dim = c(7, 2.5), message=FALSE}
-
-df <- df %>% 
-  filter(H_dom < 100) %>% 
-  filter(regime %in% c("BAU", "CCF_2", "SA_DWextract"))
-  
-#df %>% 
-  #filter(H_dom < 5) %>% 
-#  filter(N > 5000) %>% 
-#  summarize(min = min(H_dom, na.rm = T),
-  #          max = max(H_dom, na.rm = T)) 
+- if quality is uneven-aged and have a any layers in the height of 2m:
 
 
-df %>% 
- ggplot(aes(x = N,
-            y = H_dom,
-            color = regime)) +
-  geom_point(alpha = 0.5) + 
-  geom_hline(yintercept = 5, 
-             col = "red") +
-  geom_vline(xintercept = 5000, 
-             col = "red") + 
-  theme_classic() +
-  ylab("Tree height (m)") +
-  xlab("N trees/ha") +
-  facet_grid(.~regime) +
-  theme(legend.position = 'right')
+```{r shelter, echo=FALSE, fig.dim = c(3, 3), include=FALSE}
 
+# Classify sheltering
 
+df <- 
+  df %>% 
+  mutate(shelter = case_when(
+    (quality == "uneven-aged" & "Layers_lt_2m" >= 1) ~ 1, 
+    TRUE ~0 )) 
 
 ```
+
+
 
 #### Serenity: 
 
-- disance from major roads
+- distance from major roads
 - Daniel show road network over the forest stand geometry?
+- also 
+0 - within 400 m from the road of 70km/ha max speed
+1 - more then 400 m away (edge-to-edge or centroid distance??)
 
 #### Diversity:  
 
-- deadwood, tree species  on stand level
-- discuss and complete today
+- diverse if species are mixed (e.g. >70% of the )
 
 #### Nature: 
 
