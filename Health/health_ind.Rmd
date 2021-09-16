@@ -331,25 +331,23 @@ df %>%
 ```
 
 
-#### Cohesion:
+#### Cohesion: AREA is missing from this data!! 
+(made fron NFI plots, we need to add geometry layer instead)
 
 - stands over 1 ha 
 
 Mean stand area is `r round(mean(df$AREA, na.rm = T), 3)` ha. 
 
-```{r hist-AREA, echo=FALSE, fig.dim = c(7, 3), message=FALSE}
+```{r cohesion, echo=FALSE, fig.dim = c(7, 3), include=FALSE}
 
-df %>% 
-  filter(year == 2016 & regime == "BAU") %>% 
-  ggplot(aes(x = AREA,
-             fill = regime)) +
-  geom_histogram() +
-  #geom_vline(xintercept = 20) + 
-  theme_classic() +
-   theme(legend.position = 'none') +
-  xlab("area (ha)") +
-  ggtitle("NUmber of stands with cohesive quality")
- 
+# Classify cohesion
+
+df <- 
+  df %>% 
+  mutate(cohesive = case_when(
+    AREA >= 1 ~ 1, 
+    TRUE~ 0)) 
+
 ```
 
 
