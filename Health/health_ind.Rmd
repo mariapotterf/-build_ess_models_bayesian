@@ -211,9 +211,11 @@ df$q_mixed <-
 #### Shelter:
 
 - if quality is uneven-aged and have a any layers in the height of 2m:
+- 0 - no shelter
+- 1 - yes shelter
 
 
-```{r shelter, echo=FALSE, fig.dim = c(3, 3), include=FALSE}
+```{r shelter, echo=FALSE, fig.dim = c(7, 2.5), include=FALSE}
 
 # Classify sheltering
 
@@ -227,7 +229,7 @@ df <-
 ```
 
 
-```{r plot-shelter, echo = F, fig.dim = c(3, 3)}
+```{r plot-shelter, echo = F, fig.dim = c(7, 2.5)}
 
 df %>% 
   group_by(year, regime, shelter) %>% 
@@ -238,7 +240,8 @@ df %>%
   geom_line() +
   facet_grid(.~shelter) + 
   theme_bw() +
-  ylab("# of stands")
+  ylab("# of stands") +
+  ggtitle("NUmber of stands with shelter quality")
 
 ```
 
@@ -256,7 +259,7 @@ df %>%
 - diverse if species are mixed (e.g. >70% of the species volume is created by more then one species)
 
 
-```{r diversity, echo=FALSE, fig.dim = c(3, 3), include=FALSE}
+```{r diversity, echo=FALSE, fig.dim = c(7, 3), include=FALSE}
 
 # Classify diversity
 
@@ -268,7 +271,7 @@ df <-
 
 ```
 
-```{r plot-diversity, echo = F, fig.dim = c(3, 3)}
+```{r plot-diversity, echo = F, fig.dim = c(7, 2.5)}
 
 df %>% 
   group_by(year, regime, divers) %>% 
@@ -279,7 +282,8 @@ df %>%
   geom_line() +
   facet_grid(.~divers) + 
   theme_bw() +
-  ylab("# of stands")
+  ylab("# of stands") +
+  ggtitle("NUmber of stands with diversity quality")
 
 ```
 
@@ -289,7 +293,7 @@ df %>%
 
 Mean age of all stands is  `r round(mean(df$AGE_vol), 1)` years old. Distribution by regimes: 
 
-```{r hist-age, echo=FALSE, fig.dim = c(7, 2.5), message=FALSE}
+```{r hist-age, fig.dim = c(7, 2.5), message=FALSE}
 
 df <- df %>% 
   mutate(natural = case_when(
@@ -297,20 +301,20 @@ df <- df %>%
     TRUE~ 0))
 
 
-df %>% 
-  ggplot(aes(x = AGE_vol,
-             fill = regime)) +
-  geom_histogram() +
-  geom_vline(xintercept = 100) + 
-  facet_grid(.~regime) +
-     theme(legend.position = 'bottom') +
-  theme_bw()
+#df %>% 
+ # ggplot(aes(x = AGE_vol,
+#             fill = regime)) +
+ # geom_histogram() +
+#  geom_vline(xintercept = 100) + 
+ # facet_grid(.~regime) +
+ #    theme(legend.position = 'bottom') +
+#  theme_bw()
  
 
 ```
 
 
-```{r plot-natural, echo = F, fig.dim = c(7, 3)}
+```{r plot-natural, echo = F, fig.dim = c(7, 3), message=FALSE}
 
 df %>% 
   group_by(year, regime, natural) %>% 
@@ -321,21 +325,19 @@ df %>%
   geom_line() +
   facet_grid(.~natural) + 
   theme_bw() +
-  ylab("# of stands")
+  ylab("# of stands") +
+  ggtitle("NUmber of stands with naturalness quality")
 
 ```
-
-
-
 
 
 #### Cohesion:
 
 - stands over 1 ha 
 
-Mean stand area is `r round(mean(df$AREA, na.rm = T), 1)` ha. 
+Mean stand area is `r round(mean(df$AREA, na.rm = T), 3)` ha. 
 
-```{r hist-AREA, echo=FALSE, fig.dim = c(3, 2.5), message=FALSE}
+```{r hist-AREA, echo=FALSE, fig.dim = c(7, 3), message=FALSE}
 
 df %>% 
   filter(year == 2016 & regime == "BAU") %>% 
@@ -345,7 +347,8 @@ df %>%
   #geom_vline(xintercept = 20) + 
   theme_classic() +
    theme(legend.position = 'none') +
-  xlab("area (ha)") 
+  xlab("area (ha)") +
+  ggtitle("NUmber of stands with cohesive quality")
  
 ```
 
