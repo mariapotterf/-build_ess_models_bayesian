@@ -15,31 +15,45 @@ knitr::opts_chunk$set(echo = TRUE)
 1 = present
 
 #### Shelter
-- even/uneven aged forest: even-aged= if 80% of the volume is located in age classes 20 years apart
+- **even/uneven-aged** forest: even-aged= if 80% of the volume is located in age classes 20 years apart
 - SIMO *quality* - even/uneven age: even-age = if 80% of volume is located within range of 20 years
-- indicator presence/absence of the layers of less then 2 m
+- indicator presence/absence of the **layers of less then 2 m**
 - SIMO: *Layers_lt_2m*    - number of layers under 2 m
 - SIMO: *Layers_lt_2m_N*  - number of stems/ha under 2 m
 - SIMO: *Layers_lt_5m*    - number of layers under 5 m   
 - SIMO: *Layers_lt_5m_N*  - number of stems/ha under 5 m
 
 #### Serenity
-- if distant > 400m from road at 70km/h
+- if distance > 400m from road at 70km/h max speed
 - variable derived from spatial data
 
 
 #### Diversity
-- Volume for individual species & count; Volume share by species? If > 70%, then not a diverse forest
+- SIMO: *Volume* for individual species;
+- calculate the % of volume by individual tree species 
+
+**Tree species**
+
+- "V_pine"
+- "V_spruce"                 
+- "V_Birch_1"
+- "V_Birch_2"
+- "V_populus"
+- "V_Alnus_incana"
+- "V_Alnus_glutinosa"
+- "V_o_coniferous"           
+- "V_o_decidious"                            
+- If > 70% of volume is created by one species, then not a diverse forest
 
 #### Nature
-- mean age > 100 years; Age_VOL, Age_BA (lower than Age_vol)
-- AGE_vol" - age weighthed by volume                 
-- AGE_ba"  - age weighthed by basal area
+- natural if mean age > 100 years
+- SIMO: *AGE_vol* - age weighthed by volume
+- SIMO: *AGE_ba*  - age weighthed by basal area
 
 #### Cohesion
-- stand area > 1 ha
+- if stand area > 1 ha
 
-### How to combine dimensions? 
+## How to combine dimensions? 
 
 - **Edges/glades**:    shelter, nature, diversity
 - **Deep forest**:     nature, shelter, serenity
@@ -51,7 +65,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Select the most diverse management regimes: 
 
 - **BAU** - business as usual: final cut, including thinnings
-- **BAU_GTR** - business as usual, with retained trees after final farvest
+- **BAU_GTR** - business as usual, with retained trees after final harvest (Green Tree Retention)
 - **CCF** - continuous cover forestry, no final cut
 - **SA**  - set aside, no harvest
 
@@ -74,26 +88,12 @@ library(purrr)
 
 ```
 
-## Forest restoration potential
-### SIMO indicators classification
+## Forest restoration potential by management regimes
 
+Discuss with Daniel:
+- combine the dimensions: edges&glides
+0 make random number for AREA & distance from road??
 
-
-### Diversity: 
-- mixed if less then 70% of the volume belong to one species
-
-#### Tree species: (by volume)
-
-- "V_pine"
-- "V_spruce"                 
-- "V_Birch_1"
-- "V_Birch_2"
-- "V_populus"
-- "V_Alnus_incana"
-- "V_Alnus_glutinosa"
-- "V_o_coniferous"           
-- "V_o_decidious"                               
-          
        
 
 ```{r get-data, include=FALSE}
@@ -154,10 +154,9 @@ df <- df %>%
 ```
 
 
-**quality** variable contains many NA values: these follows recent harvest, e.g. H_dom (tree height) is NA or very low. Consider these as 'no forest', or keep as NA
+SIMO: **quality** variable contains many NA values: these follows recent harvest, e.g. H_dom (tree height) is NA or very low. Consider these as 'no forest', or keep as NA
 
-
-Calculate the % of species by volume
+**Calculate the % of species by volume**
 
 if any of the species has more that > 70% of volume, that the stands is not mixed = not diverse
 
@@ -262,7 +261,7 @@ df %>%
 
 
 
-```{r diversity, echo=FALSE, fig.dim = c(7, 3), include=FALSE}
+```{r diversity, echo=FALSE, fig.dim = c(7, 3), include=T}
 
 # Classify diversity
 
@@ -274,7 +273,9 @@ df <-
 
 ```
 
-```{r plot-diversity, echo = F, include=FALSE, fig.dim = c(7, 3)}
+why is CCF having more species than other regimes?
+
+```{r plot-diversity, echo=FALSE, fig.dim = c(7, 3), include=T}
 
 df %>% 
   group_by(year, regime, divers) %>% 
@@ -286,24 +287,19 @@ df %>%
   facet_grid(.~divers) + 
   theme_bw() +
   ylab("# of stands") +
-  ggtitle("NUmber of stands with diversity quality")
+  ggtitle("Number of stands with diversity quality")
 
 ```
 
-```{r plot-richness, echo = F, include=FALSE, fig.dim = c(7, 3)}
+```{r plot-richness, echo = F, include=T, fig.dim = c(7, 3)}
 
 df %>%
-  group_by(year, regime, richness) %>%
-  tally() %>%  # get counts
-  ggplot(aes(x = year,
-             y = n,
+  #group_by(year, regime, richness) %>%
+  #tally() %>%  # get counts
+  ggplot(aes(x = richness,
+             y = V,
              color = regime)) +
-  geom_line() +
-  facet_grid(.~richness) +
-  theme_bw() +
-  ylab("# of stands") +
-  ggtitle("NUmber of stands with diversity quality")
-
+  geom_jitter(alpha = 0.5) 
 ```
 
 #### Naturalness: 
