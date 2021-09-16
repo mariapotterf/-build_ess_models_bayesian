@@ -223,8 +223,23 @@ df <-
     (quality == "uneven-aged" & "Layers_lt_2m" >= 1) ~ 1, 
     TRUE ~0 )) 
 
+
 ```
 
+
+```{r plot-shelter, echo = F, fig.dim = c(3, 3)}
+
+df %>% 
+  group_by(year, regime, shelter) %>% 
+  tally() %>%  # get counts
+  ggplot(aes(x = year,
+             y = n,
+             color = regime)) +
+  geom_line() +
+  facet_grid(.~shelter) + 
+  theme_bw()
+
+```
 
 
 #### Serenity: 
