@@ -1,7 +1,7 @@
 ---
 title: "Health dimensions by regimes"
 author: "Maria Potterf"
-date: "August 5, 2021"
+date: "September 17, 2021"
 output: html_document
 ---
 
@@ -11,12 +11,33 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Forest health indicators for SIMO
 
+0 = absent
+1 = present
 
-- **Shelter**:   even/uneven aged forest: even-aged= if 80% of the volume is located in age classes 20 years apart
-- **Serenity**:  if distant > 400m from road at 70km/h
-- **Diversity**: Volume for individual species & count; Volume share by species? If > 70%, then not a diverse forest
-- **Nature**:    mean age > 100 years; Age_VOL, Age_BA (lower than Age_vol)
-- **Cohesion**:  stand area > 1 ha
+#### Shelter
+- even/uneven aged forest: even-aged= if 80% of the volume is located in age classes 20 years apart
+- SIMO *quality* - even/uneven age: even-age = if 80% of volume is located within range of 20 years
+- indicator presence/absence of the layers of less then 2 m
+- SIMO: *Layers_lt_2m*    - number of layers under 2 m
+- SIMO: *Layers_lt_2m_N*  - number of stems/ha under 2 m
+- SIMO: *Layers_lt_5m*    - number of layers under 5 m   
+- SIMO: *Layers_lt_5m_N*  - number of stems/ha under 5 m
+
+#### Serenity
+- if distant > 400m from road at 70km/h
+- variable derived from spatial data
+
+
+#### Diversity
+- Volume for individual species & count; Volume share by species? If > 70%, then not a diverse forest
+
+#### Nature
+- mean age > 100 years; Age_VOL, Age_BA (lower than Age_vol)
+- AGE_vol" - age weighthed by volume                 
+- AGE_ba"  - age weighthed by basal area
+
+#### Cohesion
+- stand area > 1 ha
 
 ### How to combine dimensions? 
 
@@ -30,14 +51,10 @@ knitr::opts_chunk$set(echo = TRUE)
 Select the most diverse management regimes: 
 
 - **BAU** - business as usual: final cut, including thinnings
+- **BAU_GTR** - business as usual, with retained trees after final farvest
 - **CCF** - continuous cover forestry, no final cut
 - **SA**  - set aside, no harvest
 
-Variation in regimes:
-
-- in rotation length
-- in final harvest type (yes, no, green tree retention)
-- variation in thinnings: no thinnings
 
 ``` {r read-libs, include=FALSE}
 rm(list = ls())
@@ -57,39 +74,27 @@ library(purrr)
 
 ```
 
-# New indicators from SIMO output querry calculated for health purposes:
+## Forest restoration potential
+### SIMO indicators classification
 
-###  Naturalness: 
-"AGE_vol" - age weighthed by volume                   
-"AGE_ba"  - age weighthed by basal area
 
-### Shelter:
-"quality" - even/uneven age: even-age = if 80% of volume is located within range of 20 years
-
-Presence of the layers of less then 2 m: classify to present/absent
-
-"Layers_lt_2m"    - number of layers under 2 m          
-"Layers_lt_2m_N"  - number of stems/ha under 2 m
-"Layers_lt_5m"    - number of layers under 5 m         
-"Layers_lt_5m_N"  - number of stems/ha under 5 m
 
 ### Diversity: 
-- mixed if less then 70% of teh volume belong to one species
+- mixed if less then 70% of the volume belong to one species
 
-Tree species: 
+#### Tree species: (by volume)
 
-by volume
-
-"V_pine"                    "V_spruce"                 
-"V_Birch_1"                 "V_Birch_2"                
-"V_populus"                 "V_Alnus_incana"           
-"V_Alnus_glutinosa"         "V_o_coniferous"           
-"V_o_decidious"                               
+- "V_pine"
+- "V_spruce"                 
+- "V_Birch_1"
+- "V_Birch_2"
+- "V_populus"
+- "V_Alnus_incana"
+- "V_Alnus_glutinosa"
+- "V_o_coniferous"           
+- "V_o_decidious"                               
           
        
-
-
-
 
 ```{r get-data, include=FALSE}
 
@@ -103,7 +108,9 @@ df <- data.table::fread(paste(inPath,
                               sep = "/"),  
                         data.table=FALSE, stringsAsFactors = FALSE)
 
+```
 
+```{r subset-data, include=FALSE}
 
 # Filter data first
 my_regimes = c("SA_DWextract", "BAU",  "CCF", "BAUwT_GTR")
@@ -144,19 +151,13 @@ df <- df %>%
   filter(regime %in% my_regimes) %>% 
   dplyr::select(all_of(my_cols))
 
-
-#str(df)
-
-
-
-
 ```
 
 
-'quality' variable contains many NA values: these follows recent harvest, e.g. H_dom (tree height) is NA or very low. Consider these as 'no forest', or keep as NA
-  
+**quality** variable contains many NA values: these follows recent harvest, e.g. H_dom (tree height) is NA or very low. Consider these as 'no forest', or keep as NA
 
-# Calculate the % of species by volume
+
+Calculate the % of species by volume
 
 if any of the species has more that > 70% of volume, that the stands is not mixed = not diverse
 
@@ -241,7 +242,7 @@ df %>%
   facet_grid(.~shelter) + 
   theme_bw() +
   ylab("# of stands") +
-  ggtitle("NUmber of stands with shelter quality")
+  ggtitle("Number of stands with shelter quality")
 
 ```
 
@@ -250,13 +251,15 @@ df %>%
 
 - distance from major roads
 - Daniel show road network over the forest stand geometry?
-- also 
-0 - within 400 m from the road of 70km/ha max speed
-1 - more then 400 m away (edge-to-edge or centroid distance??)
+- 0 - within 400 m from the road of 70km/ha max speed
+- 1 - more then 400 m away (edge-to-edge or centroid distance??)
 
 #### Diversity:  
 
-- diverse if species are mixed (e.g. >70% of the species volume is created by more then one species)
+- diverse if species are mixed (e.g. >70% of the species volume is created by more then one species, one species has at most 70% of total volume)
+- 0 - no diverse
+- 1 - yes diverse
+
 
 
 ```{r diversity, echo=FALSE, fig.dim = c(7, 3), include=FALSE}
@@ -271,7 +274,7 @@ df <-
 
 ```
 
-```{r plot-diversity, echo = F, fig.dim = c(7, 2.5)}
+```{r plot-diversity, echo = F, include=FALSE, fig.dim = c(7, 3)}
 
 df %>% 
   group_by(year, regime, divers) %>% 
@@ -287,29 +290,34 @@ df %>%
 
 ```
 
+```{r plot-richness, echo = F, include=FALSE, fig.dim = c(7, 3)}
+
+df %>%
+  group_by(year, regime, richness) %>%
+  tally() %>%  # get counts
+  ggplot(aes(x = year,
+             y = n,
+             color = regime)) +
+  geom_line() +
+  facet_grid(.~richness) +
+  theme_bw() +
+  ylab("# of stands") +
+  ggtitle("NUmber of stands with diversity quality")
+
+```
+
 #### Naturalness: 
 
-- age > 100 years old (100-140)
+- age > 100 years old
 
 Mean age of all stands is  `r round(mean(df$AGE_vol), 1)` years old. Distribution by regimes: 
 
-```{r hist-age, fig.dim = c(7, 2.5), message=FALSE}
+```{r hist-age, fig.dim = c(7, 3), include=FALSE, message=FALSE}
 
 df <- df %>% 
   mutate(natural = case_when(
     AGE_vol >= 100 ~ 1, 
     TRUE~ 0))
-
-
-#df %>% 
- # ggplot(aes(x = AGE_vol,
-#             fill = regime)) +
- # geom_histogram() +
-#  geom_vline(xintercept = 100) + 
- # facet_grid(.~regime) +
- #    theme(legend.position = 'bottom') +
-#  theme_bw()
- 
 
 ```
 
@@ -326,15 +334,15 @@ df %>%
   facet_grid(.~natural) + 
   theme_bw() +
   ylab("# of stands") +
-  ggtitle("NUmber of stands with naturalness quality")
+  ggtitle("Number of stands with naturalness quality")
 
 ```
 
 
 #### Cohesion: AREA is missing from this data!! 
-(made fron NFI plots, we need to add geometry layer instead)
+(made from NFI plots, we need to add geometry layer instead)
 
-- stands over 1 ha 
+- stands over 1 ha are cohesive
 
 Mean stand area is `r round(mean(df$AREA, na.rm = T), 3)` ha. 
 
