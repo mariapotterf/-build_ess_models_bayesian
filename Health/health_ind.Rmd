@@ -237,7 +237,8 @@ df %>%
              color = regime)) +
   geom_line() +
   facet_grid(.~shelter) + 
-  theme_bw()
+  theme_bw() +
+  ylab("# of stands")
 
 ```
 
@@ -267,7 +268,20 @@ df <-
 
 ```
 
+```{r plot-diversity, echo = F, fig.dim = c(3, 3)}
 
+df %>% 
+  group_by(year, regime, divers) %>% 
+  tally() %>%  # get counts
+  ggplot(aes(x = year,
+             y = n,
+             color = regime)) +
+  geom_line() +
+  facet_grid(.~divers) + 
+  theme_bw() +
+  ylab("# of stands")
+
+```
 
 #### Naturalness: 
 
@@ -277,6 +291,12 @@ Mean age of all stands is  `r round(mean(df$AGE_vol), 1)` years old. Distributio
 
 ```{r hist-age, echo=FALSE, fig.dim = c(7, 2.5), message=FALSE}
 
+df <- df %>% 
+  mutate(natural = case_when(
+    AGE_vol >= 100 ~ 1, 
+    TRUE~ 0))
+
+
 df %>% 
   ggplot(aes(x = AGE_vol,
              fill = regime)) +
@@ -284,10 +304,30 @@ df %>%
   geom_vline(xintercept = 100) + 
   facet_grid(.~regime) +
      theme(legend.position = 'bottom') +
-  theme_classic()
+  theme_bw()
  
 
 ```
+
+
+```{r plot-natural, echo = F, fig.dim = c(7, 3)}
+
+df %>% 
+  group_by(year, regime, natural) %>% 
+  tally() %>%  # get counts
+  ggplot(aes(x = year,
+             y = n,
+             color = regime)) +
+  geom_line() +
+  facet_grid(.~natural) + 
+  theme_bw() +
+  ylab("# of stands")
+
+```
+
+
+
+
 
 #### Cohesion:
 
