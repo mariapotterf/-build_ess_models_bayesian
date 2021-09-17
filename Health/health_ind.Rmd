@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #### Shelter
 - **even/uneven-aged** forest: even-aged= if 80% of the volume is located in age classes 20 years apart
 - SIMO *quality* - even/uneven age: even-age = if 80% of volume is located within range of 20 years
-- indicator presence/absence of the **layers of less then 2 m**
+- indicator presence/absence of the **layers of less then 5 m**
 - SIMO: *Layers_lt_2m*    - number of layers under 2 m
 - SIMO: *Layers_lt_2m_N*  - number of stems/ha under 2 m
 - SIMO: *Layers_lt_5m*    - number of layers under 5 m   
@@ -34,15 +34,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 **Tree species**
 
-- "V_pine"
-- "V_spruce"                 
-- "V_Birch_1"
-- "V_Birch_2"
-- "V_populus"
-- "V_Alnus_incana"
-- "V_Alnus_glutinosa"
-- "V_o_coniferous"           
-- "V_o_decidious"                            
+- *V_pine*
+- *V_spruce*                 
+- *V_Birch_1*
+- *V_Birch_2*
+- *V_populus*
+- *V_Alnus_incana*
+- *V_Alnus_glutinosa*
+- *V_o_coniferous*           
+- *V_o_decidious*                            
 - If > 70% of volume is created by one species, then not a diverse forest
 
 #### Nature
@@ -88,13 +88,8 @@ library(purrr)
 
 ```
 
-## Forest restoration potential by management regimes
+### Forest restoration potential by management regimes
 
-Discuss with Daniel:
-- combine the dimensions: edges&glides
-0 make random number for AREA & distance from road??
-
-       
 
 ```{r get-data, include=FALSE}
 
@@ -151,6 +146,16 @@ df <- df %>%
   filter(regime %in% my_regimes) %>% 
   dplyr::select(all_of(my_cols))
 
+
+# Recode regimes to have nicer regime names
+df$regime <- dplyr::recode_factor(as.factor(df$regime),
+                                  BAU = "BAU",
+                BAUwT_GTR = 'BAU_GTR',
+                CCF = 'CCF',
+                SA_DWextract = 'SA')
+
+df$regime <- as.character(df$regime) 
+
 ```
 
 
@@ -206,11 +211,67 @@ df$q_mixed <-
 
 
 
+#### Intial conditions
+
+
+
+```{r hist-age2016, echo = F, fig.dim = c(3, 2.5), include=TRUE}
+
+df %>% 
+  filter(year == 2016) %>%
+  ggplot(aes(x = AGE_vol)) +
+  geom_histogram(fill = 'lightgrey',
+                 color = 'black') +
+  ylab("Age [years]") +
+ # scale_color_viridis_d() +
+  xlab("year") +
+    theme_bw() +
+  ggtitle("Age distribution [2016]") +
+  theme(legend.position = "bottom",
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 1, 
+                                   hjust=1))  
+
+
+
+
+
+```
+
+
+```{r initial, echo = F, fig.dim = c(7,3), include=TRUE}
+
+df %>% 
+  #filter(year == 2016) %>%
+  ggplot(aes(y = AGE_vol,
+             x = year, #as.factor(year),
+             group = year,
+             fill = regime)) +
+  geom_boxplot(   outlier.size = 0.5)+
+  facet_grid(.~regime) + 
+  scale_fill_viridis_d() + 
+  ylab("Age [years]") +
+  scale_color_viridis_d() +
+  xlab("year") +
+  theme_bw() +
+    theme(legend.position = "bottom",
+        axis.text.x = element_text(angle = 45, 
+                                   vjust = 1, 
+                                   hjust=1)) 
+
+
+
+
+```
+
+
+
+
 ### Dimensions
 
 #### Shelter:
 
-- if quality is uneven-aged and have a any layers in the height of 2m:
+- if quality is uneven-aged and have a any layers in the height of 5m:
 - 0 - no shelter
 - 1 - yes shelter
 
@@ -222,7 +283,7 @@ df$q_mixed <-
 df <- 
   df %>% 
   mutate(shelter = case_when(
-    (quality == "uneven-aged" & "Layers_lt_2m" >= 1) ~ 1, 
+    (quality == "uneven-aged" & "Layers_lt_5m" >= 1) ~ 1, 
     TRUE ~0 )) 
 
 
@@ -237,10 +298,11 @@ df %>%
   ggplot(aes(x = year,
              y = n,
              color = regime)) +
-  geom_line() +
+  geom_line(lwd = 1) +
   facet_grid(.~shelter) + 
   theme_bw() +
   ylab("# of stands") +
+  scale_color_viridis_d() +
   ggtitle("Number of stands with shelter quality")
 
 ```
@@ -261,7 +323,7 @@ df %>%
 
 
 
-```{r diversity, echo=FALSE, fig.dim = c(7, 3), include=T}
+```{r diversity, echo=FALSE, fig.dim = c(7, 2.5), include=T}
 
 # Classify diversity
 
@@ -273,9 +335,9 @@ df <-
 
 ```
 
-why is CCF having more species than other regimes?
 
-```{r plot-diversity, echo=FALSE, fig.dim = c(7, 3), include=T}
+
+```{r plot-diversity, echo=FALSE, fig.dim = c(7, 2.5), include=T}
 
 df %>% 
   group_by(year, regime, divers) %>% 
@@ -283,15 +345,16 @@ df %>%
   ggplot(aes(x = year,
              y = n,
              color = regime)) +
-  geom_line() +
+  geom_line(lwd = 1) +
   facet_grid(.~divers) + 
+  scale_color_viridis_d() +
   theme_bw() +
   ylab("# of stands") +
   ggtitle("Number of stands with diversity quality")
 
 ```
 
-```{r plot-richness, echo = F, include=T, fig.dim = c(7, 3)}
+```{r plot-richness, echo = F, include=F, fig.dim = c(7, 2.5)}
 
 df %>%
   #group_by(year, regime, richness) %>%
@@ -308,7 +371,7 @@ df %>%
 
 Mean age of all stands is  `r round(mean(df$AGE_vol), 1)` years old. Distribution by regimes: 
 
-```{r hist-age, fig.dim = c(7, 3), include=FALSE, message=FALSE}
+```{r hist-age, fig.dim = c(7, 2.5), include=FALSE, message=FALSE}
 
 df <- df %>% 
   mutate(natural = case_when(
@@ -318,7 +381,7 @@ df <- df %>%
 ```
 
 
-```{r plot-natural, echo = F, fig.dim = c(7, 3), message=FALSE}
+```{r plot-natural, echo = F, fig.dim = c(7, 2.5), message=FALSE}
 
 df %>% 
   group_by(year, regime, natural) %>% 
@@ -326,9 +389,10 @@ df %>%
   ggplot(aes(x = year,
              y = n,
              color = regime)) +
-  geom_line() +
+  geom_line(lwd = 1) +
   facet_grid(.~natural) + 
   theme_bw() +
+  scale_color_viridis_d() +
   ylab("# of stands") +
   ggtitle("Number of stands with naturalness quality")
 
@@ -342,7 +406,7 @@ df %>%
 
 Mean stand area is `r round(mean(df$AREA, na.rm = T), 3)` ha. 
 
-```{r cohesion, echo=FALSE, fig.dim = c(7, 3), include=FALSE}
+```{r cohesion, echo=FALSE, fig.dim = c(7, 2.5), include=FALSE}
 
 # Classify cohesion
 
@@ -355,3 +419,50 @@ df <-
 ```
 
 
+# Combine dimensions into forest categories:
+
+- **multiplication** = needs to fulfill all qualities 
+edges = shelter * nature * diversity
+
+- **addition** = needs to fulfill at least one quality
+edges = shelter + nature + diversity
+
+
+```{r edge, echo=FALSE,  include=FALSE}
+
+df <- df %>% 
+  mutate(edge_multi = shelter *divers* natural,
+         edge_add =  shelter +divers+ natural)
+
+```
+
+```{r edge-plot, echo=FALSE, fig.dim = c(7, 2.5), include=T}
+
+df %>% 
+  group_by(year, regime, edge_multi) %>% 
+  tally() %>%  # get counts
+  ggplot(aes(x = year,
+             y = n,
+             color = regime)) +
+  geom_line(lwd = 1) +
+  facet_grid(.~edge_multi) + 
+  theme_bw() +
+  scale_color_viridis_d() +
+  ylab("# of stands") +
+  ggtitle("Number of stands with edge quality = multi")
+  
+  
+df %>% 
+  group_by(year, regime, edge_add) %>% 
+  tally() %>%  # get counts
+  ggplot(aes(x = year,
+             y = n,
+             color = regime)) +
+  geom_line(lwd = 1) +
+  facet_grid(.~edge_add) + 
+  theme_bw() +
+  scale_color_viridis_d() +
+  ylab("# of stands") +
+  ggtitle("Number of stands with edge quality = addit")
+ 
+```
