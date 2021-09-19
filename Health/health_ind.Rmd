@@ -6,7 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) # echo = TRUE, 
+ 
 ```
 
 ### Forest health indicators for SIMO
@@ -215,14 +216,14 @@ df$q_mixed <-
 
 
 
-```{r hist-age2016, echo = F, fig.dim = c(3, 2.5), include=TRUE, message=FALSE}
+```{r hist-age2016, echo = F, fig.dim = c(3, 2.5), message=FALSE}
 
 df %>% 
-  filter(year == 2016) %>%
+  filter(year == 2016 & regime == 'SA') %>%
   ggplot(aes(x = AGE_vol)) +
   geom_histogram(fill = 'lightgrey',
                  color = 'black') +
-  ylab("Age [years]") +
+  #ylab("Age [years]") +
  # scale_color_viridis_d() +
   xlab("year") +
     theme_bw() +
@@ -239,7 +240,7 @@ df %>%
 ```
 
 
-```{r initial, echo = F, fig.dim = c(7,3), include=TRUE, message=FALSE}
+```{r initial, echo = F, fig.dim = c(7,3), message=FALSE}
 
 df %>% 
   #filter(year == 2016) %>%
