@@ -215,7 +215,7 @@ df$q_mixed <-
 
 
 
-```{r hist-age2016, echo = F, fig.dim = c(3, 2.5), include=TRUE}
+```{r hist-age2016, echo = F, fig.dim = c(3, 2.5), include=TRUE, message=FALSE}
 
 df %>% 
   filter(year == 2016) %>%
@@ -239,7 +239,7 @@ df %>%
 ```
 
 
-```{r initial, echo = F, fig.dim = c(7,3), include=TRUE}
+```{r initial, echo = F, fig.dim = c(7,3), include=TRUE, message=FALSE}
 
 df %>% 
   #filter(year == 2016) %>%
