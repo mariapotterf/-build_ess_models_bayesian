@@ -134,7 +134,7 @@ my_cols = c("id",
            "V_Alnus_glutinosa",
            "V_o_coniferous",
            "V_o_decidious",
-           "quality",
+           "quality",         # indicates if stand is even/uneven aged 
            "Layers_lt_2m",
            "Layers_lt_5m",
            "Layers_lt_2m_N",
